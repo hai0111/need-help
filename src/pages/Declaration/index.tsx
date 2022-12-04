@@ -1,35 +1,19 @@
 import { FormikHelpers, useFormik } from 'formik'
-import React from 'react'
+import React, { Fragment } from 'react'
 import { Button, Container, Form } from 'react-bootstrap'
 import { v4 as uuidv4 } from 'uuid'
 import { IItem } from '../../components/TableComponent'
+import countries from '../../data/countries.json'
 import * as Yup from 'yup'
 
-interface ITravel {
-	departure?: string
-	departureDate?: string
-	destination?: string
-	immigrationDate?: string
-}
-
-interface IItemErrors {
-	address?: string
-	dateOfBirth?: string
-	district?: string
-	email?: string
-	fullName?: string
-	gender?: string
-	id?: string
-	mobile?: string
-	nationId?: string
-	nationality?: string
-	object?: string
-	province?: string
-	symptoms?: string[]
-	travels?: ITravel[]
-}
-
 const Declaration = () => {
+	const initTravel = {
+		departure: '',
+		departureDate: '',
+		destination: '',
+		immigrationDate: ''
+	}
+
 	const initValues: IItem = {
 		id: uuidv4(),
 		address: '',
@@ -43,38 +27,33 @@ const Declaration = () => {
 		nationId: '',
 		object: '',
 		province: '',
-		symptoms: [''],
-		travels: [
-			{
-				departure: '',
-				departureDate: '',
-				destination: '',
-				immigrationDate: ''
-			}
-		]
+		symptoms: [],
+		travels: [initTravel]
 	}
 
 	const handleSubmit = (values: IItem, formikHelpers: FormikHelpers<any>) => {}
-	const validate = (values: IItem) => {
-		const errors: IItemErrors = {}
-		if (values.fullName === '') {
-			errors.fullName = 'Name is required'
-		}
-		if (values.object === '') {
-			errors.object = 'Object is required'
-		}
-		if (values.dateOfBirth === '') {
-			errors.dateOfBirth = 'Date of birth is required'
-		}
-		return errors
-	}
+
+	const validationSchema = Yup.object({
+		fullName: Yup.string().required('Name is required'),
+		object: Yup.string().required('Object is required'),
+		dateOfBirth: Yup.string().required('Date of birth is required'),
+		gender: Yup.string().required('Gender is required'),
+		nationality: Yup.string().required('Nationality is required'),
+		nationId: Yup.string().required('Nation ID is required'),
+		travels: Yup.array().of(
+			Yup.object({
+				departure: Yup.string().required('Departure is required'),
+				departureDate: Yup.string().required('Departure Date is required'),
+				destination: Yup.string().required('Destination is required'),
+				immigrationDate: Yup.string().required('Immigration Date is required')
+			})
+		)
+	})
 
 	const formik = useFormik({
 		initialValues: { ...initValues },
 		onSubmit: handleSubmit,
-		validate
-		// validateOnBlur: true,
-		// validateOnChange: true
+		validationSchema
 	})
 
 	React.useEffect(() => {
@@ -82,7 +61,7 @@ const Declaration = () => {
 	}, [formik.values])
 
 	return (
-		<Container>
+		<Container className="pb-5">
 			<h1
 				className="text-success h2 text-center my-5
 			"
@@ -100,7 +79,7 @@ const Declaration = () => {
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 						value={formik.values.fullName}
-						isInvalid={!!formik.errors.fullName}
+						isInvalid={!!(formik.touched.fullName && formik.errors.fullName)}
 					/>
 					<Form.Control.Feedback type="invalid">
 						{formik.errors.fullName}
@@ -115,7 +94,7 @@ const Declaration = () => {
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 						value={formik.values.object}
-						isInvalid={!!formik.errors.object}
+						isInvalid={!!(formik.touched.object && formik.errors.object)}
 					>
 						<option value="">------Choose</option>
 						<option value="Expert">Expert</option>
@@ -137,15 +116,118 @@ const Declaration = () => {
 						onChange={formik.handleChange}
 						onBlur={formik.handleBlur}
 						value={formik.values.dateOfBirth}
-						isInvalid={!!formik.errors.dateOfBirth}
+						isInvalid={
+							!!(formik.touched.dateOfBirth && formik.errors.dateOfBirth)
+						}
 					/>
 					<Form.Control.Feedback type="invalid">
 						{formik.errors.dateOfBirth}
 					</Form.Control.Feedback>
 				</Form.Group>
-				<Button variant="primary" type="submit">
+				<Form.Group className="mb-3">
+					<Form.Label>
+						Gender <span className="text-danger">*</span>
+					</Form.Label>
+					<Form.Select
+						name="gender"
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+						value={formik.values.gender}
+						isInvalid={!!(formik.touched.gender && formik.errors.gender)}
+					>
+						<option value="">------Choose</option>
+						<option value="Male">Male</option>
+						<option value="Female">Female</option>
+						<option value="Other">Other</option>
+					</Form.Select>
+					<Form.Control.Feedback type="invalid">
+						{formik.errors.gender}
+					</Form.Control.Feedback>
+				</Form.Group>
+				<Form.Group className="mb-3">
+					<Form.Label>
+						Gender <span className="text-danger">*</span>
+					</Form.Label>
+					<Form.Select
+						name="nationality"
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+						value={formik.values.nationality}
+						isInvalid={
+							!!(formik.touched.nationality && formik.errors.nationality)
+						}
+					>
+						<option value="">------Choose</option>
+						{countries.map((item) => (
+							<option key={item.code} value={item.name}>
+								{item.name}
+							</option>
+						))}
+					</Form.Select>
+					<Form.Control.Feedback type="invalid">
+						{formik.errors.nationality}
+					</Form.Control.Feedback>
+				</Form.Group>
+				<Form.Group className="mb-3">
+					<Form.Label>
+						Nation ID or Passport ID <span className="text-danger">*</span>
+					</Form.Label>
+					<Form.Control
+						placeholder="Nation ID or Passport ID..."
+						name="nationId"
+						onChange={formik.handleChange}
+						onBlur={formik.handleBlur}
+						value={formik.values.nationId}
+						isInvalid={!!(formik.touched.nationId && formik.errors.nationId)}
+					/>
+					<Form.Control.Feedback type="invalid">
+						{formik.errors.nationId}
+					</Form.Control.Feedback>
+				</Form.Group>
+				<Form.Group>
+					<p className="h4 fw-bold">Travel:</p>
+				</Form.Group>
+				{formik.values.travels.length ? (
+					formik.values.travels.map((item, index) => (
+						<Fragment key={index}>
+							<p className="fw-bold text-primary">Travel 1</p>
+							<Form.Group className="mb-3">
+								<Form.Label>
+									Departure Date <span className="text-danger">*</span>
+								</Form.Label>
+								<Form.Control
+									type="date"
+									name={`travels[${index}].departureDate`}
+									onChange={formik.handleChange}
+									onBlur={formik.handleBlur}
+									value={item.departureDate}
+									isInvalid={
+										!!(
+											formik.touched.travels?.[index].departureDate &&
+											typeof formik.errors.travels?.[index] !== 'string' &&
+											formik.errors.travels?.[index].departureDate
+										)
+									}
+								/>
+								<Form.Control.Feedback type="invalid">
+									{typeof formik.errors.travels?.[index] === 'string'
+										? formik.errors.travels?.[index]
+										: formik.errors.travels?.[index].departureDate}
+								</Form.Control.Feedback>
+							</Form.Group>
+						</Fragment>
+					))
+				) : (
+					<div className="d-flex align-items-center">
+						<p className="mb-0 me-3">Do you travel in the last 14 days ?</p>
+						<Button variant="warning" className="fw-semibold">
+							Add more
+						</Button>
+					</div>
+				)}
+				{/* <Button variant="primary" type="submit">
 					Submit
-				</Button>
+				</Button> */}
 			</Form>
 		</Container>
 	)
