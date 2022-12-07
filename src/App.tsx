@@ -22,7 +22,14 @@ const App = () => {
 					</Suspense>
 				}
 			/>
-			<Route path="edit/:id" element={<Edit />} />
+			<Route
+				path="edit/:id"
+				element={
+					<Suspense fallback={<Loading />}>
+						<Declaration />
+					</Suspense>
+				}
+			/>
 		</Routes>
 	)
 }

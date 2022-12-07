@@ -50,6 +50,7 @@ const PaginationCustom = ({ totalRecord = 1, getPageInfo }: IProps) => {
 
 	const changePageSize = (e: React.ChangeEvent<HTMLSelectElement>): void => {
 		setPageSize(Number(e.target.value))
+		setPageIndex(1)
 	}
 
 	return (

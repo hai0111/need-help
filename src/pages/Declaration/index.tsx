@@ -1,8 +1,10 @@
-import { Formik, FormikHelpers, FormikProps, useFormikContext } from 'formik'
+import { Formik, FormikHelpers, FormikProps } from 'formik'
 import React, { useEffect, useState } from 'react'
 import { Button, Col, Container, Form, Row } from 'react-bootstrap'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
 import * as Yup from 'yup'
+import ModalComponent from '../../components/Modal'
 import { IItem } from '../../components/TableComponent'
 import countries from '../../data/countries.json'
 import provinces from '../../data/vietnam-province-district.json'
@@ -19,15 +21,9 @@ interface IProvince {
 	cities: IDistrict
 }
 
-const TrackingValue = () => {
-	const { values } = useFormikContext()
-	useEffect(() => {
-		console.log(values)
-	}, [values])
-	return null
-}
-
 const Declaration = () => {
+	const { id } = useParams()
+
 	const initTravel = {
 		departure: '',
 		departureDate: '',
@@ -35,24 +31,42 @@ const Declaration = () => {
 		immigrationDate: ''
 	}
 
-	const initValues: IItem = {
-		id: uuidv4(),
-		address: '',
-		dateOfBirth: '',
-		district: '',
-		email: '',
-		fullName: '',
-		gender: '',
-		mobile: '',
-		nationality: '',
-		nationId: '',
-		object: '',
-		province: '',
-		symptoms: [],
-		travels: []
-	}
+	const initValues: IItem = id
+		? JSON.parse(localStorage.getItem('data-form') || '[]').find(
+				(item: IItem) => item.id === id
+		  )
+		: {
+				id: uuidv4(),
+				address: '',
+				dateOfBirth: '',
+				district: '',
+				email: '',
+				fullName: '',
+				gender: '',
+				mobile: '',
+				nationality: '',
+				nationId: '',
+				object: '',
+				province: '',
+				symptoms: [],
+				travels: []
+		  }
 
-	const handleSubmit = (values: IItem, formikHelpers: FormikHelpers<any>) => {}
+	const navigate = useNavigate()
+
+	const handleSubmit = (values: IItem) => {
+		const dataForm: IItem[] = JSON.parse(
+			localStorage.getItem('data-form') || '[]'
+		)
+		if (id) {
+			const _index = dataForm.findIndex((item) => item.id === id)
+			dataForm[_index] = values
+		} else {
+			dataForm.push(values)
+		}
+		localStorage.setItem('data-form', JSON.stringify(dataForm))
+		navigate('/table')
+	}
 
 	const validationSchema = Yup.object({
 		fullName: Yup.string().required('Name is required'),
@@ -93,6 +107,17 @@ const Declaration = () => {
 		setProvincesList(provicesArray)
 	}, [])
 
+	// [Cancel Modal]====================================================
+	const [cancelModal, setCancelModal] = useState<boolean>(false)
+
+	const toggleCancel = () => {
+		setCancelModal(!cancelModal)
+	}
+
+	const cancel = (): void => {
+		navigate('/table')
+	}
+
 	return (
 		<Container className="pb-5">
 			<h1
@@ -113,7 +138,8 @@ const Declaration = () => {
 					handleChange,
 					handleBlur,
 					touched,
-					setFieldValue
+					setFieldValue,
+					setValues
 				}: IIFormik) => {
 					const addMoreTravel = () => {
 						const _prev = values.travels
@@ -139,6 +165,10 @@ const Declaration = () => {
 						} else {
 							setDistricts([])
 						}
+					}
+
+					const resetValues = () => {
+						setValues(initValues)
 					}
 					return (
 						<Form onSubmit={handleSubmit}>
@@ -312,7 +342,7 @@ const Declaration = () => {
 												<Col xs={12} md={6}>
 													<Form.Group className="mb-3">
 														<Form.Label>
-															Immigration Date{' '}
+															Immigration Date
 															<span className="text-danger">*</span>
 														</Form.Label>
 														<Form.Control
@@ -398,10 +428,10 @@ const Declaration = () => {
 													</Form.Group>
 												</Col>
 												<Col>
-													<Form.Group>
+													<Form.Group className="mb-4">
 														<Button
-															variant="warning"
 															onClick={addMoreTravel}
+															variant="warning"
 															className="fw-semibold"
 														>
 															Add more
@@ -469,7 +499,7 @@ const Declaration = () => {
 										</Form.Label>
 										<Form.Select
 											name="district"
-											onChange={changeProvince}
+											onChange={handleChange}
 											onBlur={handleBlur}
 											value={values.district}
 											isInvalid={!!(touched.district && errors.district)}
@@ -570,7 +600,7 @@ const Declaration = () => {
 									<p className="h5 fw-bold">Vaccines:</p>
 								</Col>
 								<Col xs={12} lg={4}>
-									<p>Which one would you like to vaccinate ?:</p>
+									<p>Which one would you like to vaccinate?:</p>
 								</Col>
 								<Col xs={12} lg={8}>
 									<div className="d-flex">
@@ -599,27 +629,38 @@ const Declaration = () => {
 									</Button>
 									<Button
 										size="lg"
-										className="ms-2"
 										variant="danger"
 										type="button"
+										className="ms-2"
+										onClick={() => {
+											id ? cancel() : toggleCancel()
+										}}
 									>
 										Cancel
 									</Button>
 									<Button
 										size="lg"
 										className="ms-2"
+										type="button"
 										variant="secondary"
-										type="reset"
+										onClick={resetValues}
 									>
 										Reset
 									</Button>
 								</Col>
-								<TrackingValue />
 							</Row>
 						</Form>
 					)
 				}}
 			</Formik>
+			<ModalComponent
+				show={cancelModal}
+				children="Your data has not been saved. Definitely escape?"
+				onSuccess={cancel}
+				title="Confirm exit"
+				toggle={toggleCancel}
+				color="danger"
+			/>
 		</Container>
 	)
 }
